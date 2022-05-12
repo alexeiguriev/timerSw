@@ -3,7 +3,7 @@
 #define TIMERSW_H_
 
 #include "../TimerSwCfg.h"
-#include "../../general/if/StatuError.h"
+
 
 /*******************************************************************************
  * includes
