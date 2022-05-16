@@ -1,38 +1,43 @@
-#ifndef TIMERSWCFG_H_
-#define TIMERSWCFG_H_
-
 
 /*******************************************************************************
  * includes
  ******************************************************************************/
-#include <stdint.h>
-#include "../../../static/general/if/StatuError.h"
+#include "../if/TimerSw.h"
 
 /*******************************************************************************
- * defines
- ******************************************************************************/
-#ifndef NULL
-#define NULL ((void *)0)
-#endif
-/*******************************************************************************
- * typedefs
+ * local vars
  ******************************************************************************/
 
-/**
- * @brief Timer base value.
- */
-typedef uint32_t TimerSwValue;
+/*******************************************************************************
+ * local functions
+ ******************************************************************************/
 
 /*******************************************************************************
- * timer structures
+ * local functions
  ******************************************************************************/
 
 /*******************************************************************************
  * functions
  ******************************************************************************/
+StatusError TimerSwTestRutine(void)
+{
+	StatusErr err;
+	TimerSwInitParam timerSwParam;
+	StatusError err = TimerSwGetInitParam(&timerSwParam);
 
-/**
- * @}
- */
+	const char * expectedStatus = StatusErrorToString(StatusErrNotImplemented);
+	const char * actualStatus = StatusErrorToString(err);
 
-#endif /* TIMERSWCFG_H_ */
+	int strCmpStatus = strcmp(expectedStatus,actualStatus);
+
+	if(strCmpStatus != 0)
+	{
+		err = StatusErrNotExpected;
+	}
+	else
+	{
+		err = StatusErrNone;
+	}
+
+	return err;
+}

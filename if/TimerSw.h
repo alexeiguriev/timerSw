@@ -2,7 +2,7 @@
 #ifndef TIMERSW_H_
 #define TIMERSW_H_
 
-#include "../TimerSwCfg.h"
+#include "../../../config/timerSw/src/TimerSwCfg.h"
 
 
 /*******************************************************************************
