@@ -3,7 +3,6 @@
  * includes
  ******************************************************************************/
 #include "../if/TimerSw.h"
-#include "../if/TimerSwBaseTypes.h"
 #include <stdbool.h>
 #include "TimerSwBase.h"
 
@@ -23,7 +22,7 @@ static StatusError s_IsValidHandle(const TimerSwHandle * const handle)
         return StatusErrParam;
     }
 
-    if (false == ((const TimerSwHandleNonAbstr *)handle)->initialized)
+    if (false == ((const TimerSwHandle *)handle)->initialized)
     {
         return StatusErrHandle;
     }
@@ -40,7 +39,7 @@ static StatusError s_IsValidAndActiveHandle(const TimerSwHandle * const handle)
         return err;
     }
 
-    if (false == ((const TimerSwHandleNonAbstr *)handle)->active)
+    if (false == ((const TimerSwHandle *)handle)->active)
     {
         return StatusErrDenied;
     }
@@ -49,7 +48,7 @@ static StatusError s_IsValidAndActiveHandle(const TimerSwHandle * const handle)
 }
 
 static StatusError s_GetTimerStateProp(
-        const TimerSwHandleNonAbstr * const handle,
+        const TimerSwHandle			* const handle,
               TimerSwValue          * const optArgOutPassedTimeMs,
               TimerSwValue          * const optArgOutRemainingTimeMs)
 {
@@ -64,70 +63,63 @@ static StatusError s_GetTimerStateProp(
     //  * case 3 : |----e-a---------s---| -> start  > end, active >= end and active < start, timeout
     //  */
 
-    // TimerSwValue ticks;
-    // TimerSwValue timeValRemainingMs = 0;
-    // StatusError         err                = StatusErrNone;
+    TimerSwValue ticks;
+    TimerSwValue timeValRemainingMs = 0;
+    StatusError         err                = StatusErrNone;
 
-    // err = CplSalSysTickStateGetTicks(s_SysTickStateIf, &ticks);
+    ticks = *handle->pInterval;
 
-    // if (StatusErrNone != err)
-    // {
-    //     return err;
-    // }
+    /* case 0 is covered by interval != 0 check*/
 
-    // /* case 0 is covered by interval != 0 check*/
+    /* case 1 & 2 */
+    if (handle->start < handle->end)
+    {
+        /* case 1 */
+        if (ticks >= handle->end)
+        {
+            err = StatusErrTime;
+        }
+        /* case 2 */
+        else if (ticks < handle->start)
+        {
+            err = StatusErrTime;
+        }
+        /* no timeout */
+        else
+         {
+             timeValRemainingMs = handle->end - ticks;
+         }
+     }
+     /* case 3 */
+     else
+     {
+         /* case 3 */
+         if ((ticks >= handle->end) && (ticks < handle->start))
+         {
+             err = StatusErrTime;
+         }
+         /* no timeout */
+         else if (ticks < handle->end)
+         {
+         	timeValRemainingMs = handle->end - ticks;
+         }
+         else
+         {
+         	timeValRemainingMs = (CPL_SAL_TIMER_VALUE_MAX - ticks) + handle->end + 1;
+         }
+     }
 
-    // /* case 1 & 2 */
-    // if (handle->start < handle->end)
-    // {
-    //     /* case 1 */
-    //     if (ticks >= handle->end)
-    //     {
-    //         err = StatusErrTime;
-    //     }
-    //     /* case 2 */
-    //     else if (ticks < handle->start)
-    //     {
-    //         err = StatusErrTime;
-    //     }
-    //     /* no timeout */
-    //     else
-    //     {
-    //         timeValRemainingMs = handle->end - ticks;
-    //     }
-    // }
-    // /* case 3 */
-    // else
-    // {
-    //     /* case 3 */
-    //     if ((ticks >= handle->end) && (ticks < handle->start))
-    //     {
-    //         err = StatusErrTime;
-    //     }
-    //     /* no timeout */
-    //     else if (ticks < handle->end)
-    //     {
-    //     	timeValRemainingMs = handle->end - ticks;
-    //     }
-    //     else
-    //     {
-    //     	timeValRemainingMs = (CPL_SAL_TIMER_VALUE_MAX - ticks) + handle->end + 1;
-    //     }
-    // }
+     if (NULL != optArgOutRemainingTimeMs)
+     {
+         *optArgOutRemainingTimeMs = timeValRemainingMs;
+     }
 
-    // if (NULL != optArgOutRemainingTimeMs)
-    // {
-    //     *optArgOutRemainingTimeMs = timeValRemainingMs;
-    // }
+     if (NULL != optArgOutPassedTimeMs)
+     {
+         *optArgOutPassedTimeMs = TimerSwBasePassed(ticks, handle->start);
+     }
 
-    // if (NULL != optArgOutPassedTimeMs)
-    // {
-    //     *optArgOutPassedTimeMs = TimerSwBasePassed(ticks, handle->start);
-    // }
-
-    // return err;
-
-    return StatusErrNotImplemented;
+    return err;
 }
 
 /*******************************************************************************
@@ -135,66 +127,33 @@ static StatusError s_GetTimerStateProp(
  ******************************************************************************/
 static StatusError s_Init(
         const TimerSwInitParam      * const param,
-              TimerSwHandleNonAbstr * const handleNA)
+              TimerSwHandle			* const handleNA)
 {
-    // if (NULL == param->sysTickIf)
-    // {
-    // 	return StatusErrParam;
-    // }
-
-    // if (NULL == param->sysTickIf->GetTicks)
-    // {
-    // 	return StatusErrParam;
-    // }
-
-    // if (NULL != s_SysTickStateIf &&
-    // 		s_SysTickStateIf != param->sysTickIf)
-    // {
-    // 	return StatusErrParamVal;
-    // }
-
-    // if (NULL == s_SysTickStateIf)
-    // {
-    //     s_SysTickStateIf = param->sysTickIf;
-    // }
-
-    // *handleNA = (TimerSwHandleNonAbstr) {
-    //     .initialized = true,
-    //     .interval    = param->interval,
-    // };
-
-    // return StatusErrNone;
-    return StatusErrNotImplemented;
+	handleNA->initialized = true;
+	handleNA->pInterval = &param->interval;
+	handleNA->interval = param->interval;
+	
+    return StatusErrNone;
 }
 
 static StatusError s_Startup(
-			  TimerSwHandleNonAbstr * const handleNA,
+			  TimerSwHandle		* const handleNA,
 		const TimerSwValue interval)
 {
-    // StatusError         err;
-    // TimerSwValue tick;
+    TimerSwValue tick = *handleNA->pInterval;
+	
 
-    // err = CplSalSysTickStateGetTicks(s_SysTickStateIf, &tick);
-
-    // if (StatusErrNone != err)
-    // {
-    //     return err;
-    // }
-
-    // *handleNA = (TimerSwHandleNonAbstr) {
-    //     .initialized = true,
-    //     .active      = true,
-    //     .start       = tick,
-    //     .end         = tick + interval,
-    //     .interval    = interval,
-    // };
-
-    // return StatusErrNone;
+    handleNA->initialized = true;
+    handleNA->active      = true;
+    handleNA->start       = tick;
+    handleNA->end         = tick + interval;
+    handleNA->interval    = interval;
+	
+	return StatusErrNone;
+};
     
-    return StatusErrNotImplemented;
-}
 
-static StatusError s_Shutdown(TimerSwHandleNonAbstr * const handleNA)
+static StatusError s_Shutdown(TimerSwHandle * const handleNA)
 {
     if (false == handleNA->active)
     {
@@ -205,7 +164,7 @@ static StatusError s_Shutdown(TimerSwHandleNonAbstr * const handleNA)
     return StatusErrNone;
 }
 
-static StatusError s_IsActive(const TimerSwHandleNonAbstr * const handleNA)
+static StatusError s_IsActive(const TimerSwHandle * const handleNA)
 {
     return (handleNA->active) ? StatusErrNone : StatusErrNotActive;
 }
@@ -235,7 +194,7 @@ StatusError TimerSwInit(
         return StatusErrParam;
     }
 
-    return s_Init(param, (TimerSwHandleNonAbstr*)handle);
+    return s_Init(param, handle);
 }
 
 StatusError TimerSwRelease(
@@ -263,7 +222,7 @@ StatusError TimerSwStartup(
         return err;
     }
 
-    return s_Startup((TimerSwHandleNonAbstr*)handle, interval);
+    return s_Startup(handle, interval);
 }
 
 StatusError TimerSwShutdown(TimerSwHandle * const handle)
@@ -275,7 +234,7 @@ StatusError TimerSwShutdown(TimerSwHandle * const handle)
         return err;
     }
 
-    return s_Shutdown((TimerSwHandleNonAbstr*)handle);
+    return s_Shutdown(handle);
 }
 
 StatusError TimerSwIsActive(
@@ -288,7 +247,7 @@ StatusError TimerSwIsActive(
         return err;
     }
 
-    return s_IsActive((TimerSwHandleNonAbstr*)handle);
+    return s_IsActive(handle);
 }
 
 StatusError TimerSwIsExpired(
@@ -302,7 +261,7 @@ StatusError TimerSwIsExpired(
     }
 
     return s_GetTimerStateProp(
-            (TimerSwHandleNonAbstr*)handle,
+            handle,
             NULL,
             NULL);
 }
@@ -326,7 +285,7 @@ StatusError TimerSwRemaining(
     }
 
     return s_GetTimerStateProp(
-            (TimerSwHandleNonAbstr*)handle,
+            handle,
             NULL,
             remainingTimeMs);
 }
@@ -350,7 +309,7 @@ StatusError TimerSwPassed(
     }
 
     return s_GetTimerStateProp(
-            (TimerSwHandleNonAbstr*)handle,
+            handle,
             passedTimeMs,
             NULL);
 }

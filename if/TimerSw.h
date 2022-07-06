@@ -2,7 +2,8 @@
 #ifndef TIMERSW_H_
 #define TIMERSW_H_
 
-#include "../../../config/timerSw/src/TimerSwCfg.h"
+#include "TimerSwCfg/TimerSwCfg.h"
+#include <stdbool.h>
 
 
 /*******************************************************************************
@@ -37,11 +38,6 @@
  */
 typedef struct {
     /**
-     * @brief CplSalSysTickState interface.
-     */
-	// CplSalSysTickStateIf * sysTickIf;
-
-    /**
      * @brief Interval of the timer.
      */
     TimerSwValue interval;
@@ -54,9 +50,34 @@ typedef struct {
 typedef struct {
 
     /**
-     * @brief Abstracted timer handle content.
+     * @brief Indicated a proper initialization of the timer.
      */
-    uint8_t data[16];
+    bool initialized;
+
+    /**
+     * @brief Indicates whether the timer is active or inactive.
+     */
+    bool active;
+
+    /**
+     * @brief The tick when the timer was started.
+     */
+    TimerSwValue start;
+
+    /**
+     * @brief The tick when the timer will expire.
+     */
+    TimerSwValue end;
+
+    /**
+     * @brief The timer interval.
+     */
+    TimerSwValue interval;
+	
+    /**
+     * @brief The pointer to tick interval.
+     */
+    TimerSwValue const * pInterval;
 
 } TimerSwHandle;
 
